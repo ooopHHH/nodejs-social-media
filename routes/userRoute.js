@@ -1,16 +1,16 @@
 const express = require('express');
-const { randomUUID } = require('node:crypto');
 
 const router = express.Router();
 
 const pool = require('../db');
 
+
 router.get('/', async (req, res, next) => {
   try {
     const { rows } = await pool.query('SELECT * FROM users')
     res.status(200).json(rows);
-  } catch (error) {
-    next(error)
+  } catch (err) {
+    next(err)
   }
 });
 
@@ -23,55 +23,79 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ message: "this user doesn't exist" });
     }
       res.status(200).json(rows[0]);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 });
 
 
-router.post('/:name/:yob', (req, res, next) => {
-  const newUserId = randomUUID();
-  const { name, yob } = req.params;
-
+router.post('/', async (req, res, next) => {
+  const { name, dob, email_address, phone_number } = req.body;
   try {
-    users[newUserId] = {name, yob: parseInt(yob)};
-    res.status(201).json({ message: `user ${newUserId} created` });
-  } catch (error) {
-    next(error);
+    const { rows } = await pool.query(
+      `INSERT INTO users (user_name, date_of_birth, email_address, phone_number) 
+      VALUES ($1, $2, $3, $4) 
+      RETURNING *`,
+      [name, dob, email_address, phone_number]
+    );
+    res.status(201).json({ message: `user ${rows[0].user_name} created` });
+  } catch (err) {
+    if (err.code === '23505') {
+      res.status(409).json({ 
+        error: 'Email or phone number already in use' 
+      })
+    } else {
+      next(err);
+    }
   }
 });
 
 
-router.put('/:id/:name/:yob', (req, res, next) => {
-  const { id, name, yob } = req.params;
-
-  if (!users[id])  {
-    return res.status(404).json({ message: "this user doesn't exist" });
-  }
-  try {
-    users[id].name = name;
-    users[id].yob = parseInt(yob);
-    res.status(200).json({ message: `user ${id} updated successfully` });
-  } catch(error) {
-    next(error);
-  }
-});
-
-
-router.delete('/:id', (req, res, next) => {
+router.patch('/:id', async (req, res, next) => {
   const { id } = req.params;
-
-  if (!users[id]) {
-    return res.status(404).json({ message: "this user doesn't exist" });
+  const { name, dateOfBirth, emailAddress, phoneNumber } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE users SET
+        user_name = COALESCE($1, user_name),
+        date_of_birth = COALESCE($2, date_of_birth),
+        email_address = COALESCE($3, email_address),
+        phone_number  = COALESCE($4, phone_number)
+      WHERE id = $5
+      RETURNING *`,
+      [name, dateOfBirth, emailAddress, phoneNumber, id]
+    )
+    if (rows.length === 0)  {
+      return res.status(404).json({ message: "this user doesn't exist" });
+    }
+    res.status(200).json({ message: `user ${rows[0].user_name} updated successfully` });
+  } catch(err) {
+    if (err.code === '23505') {
+      res.status(409).json({ error: 'Email or phone number already in use' })
+    } else {
+      next(err);
+    }
   }
-
-  try{
-    delete users[id];
-    res.status(200).json({ message: `user ${id} deleted successfully`});
-  } catch (error) {
-    next(error);
-  }
-  
 });
+
+
+router.delete('/:id', async (req, res, next) => {
+  const { id } = req.params;
+  try{
+    const { rows } = await pool.query(
+      `DELETE FROM users WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "this user doesn't exist" });
+    }
+    res.status(200).json({ 
+      message: `user ${rows[0].user_name} deleted successfully`
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 module.exports = router;
