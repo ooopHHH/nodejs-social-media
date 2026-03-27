@@ -1,7 +1,7 @@
 const express = require('express');
+const bcrypt = require('bcrypt')
 
 const router = express.Router();
-
 const pool = require('../db');
 
 
@@ -49,6 +49,25 @@ router.post('/', async (req, res, next) => {
     }
   }
 });
+
+router.post('/login/:id', async (req, res, next) => {
+  const { id } = req.params;
+  const { password } = req.body
+  try {
+    const { rows } = await pool.query(
+      'SELECT password FROM users WHERE id = $1',
+      [id]
+    )
+    const hash = rows[0].password;
+    const match = await bcrypt.compare(password, hash);
+    if (!match) {
+      return res.status(401).json({ message: `incorret password` })
+    }
+    res.status(200).json({ message: 'correct password' })
+  } catch (error) {
+    next(error)
+  }
+})
 
 
 router.patch('/:id', async (req, res, next) => {
