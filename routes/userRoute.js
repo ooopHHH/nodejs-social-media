@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt')
 
+
 const router = express.Router();
 const pool = require('../db');
 
@@ -28,6 +29,10 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
+router.get('/profile', async (req, res, next) => {
+  //
+})
+
 
 router.post('/', async (req, res, next) => {
   const { name, dob, email_address, phone_number } = req.body;
@@ -52,21 +57,34 @@ router.post('/', async (req, res, next) => {
 
 router.post('/login/:id', async (req, res, next) => {
   const { id } = req.params;
-  const { password } = req.body
+  const { password } = req.body;
   try {
     const { rows } = await pool.query(
       'SELECT password FROM users WHERE id = $1',
       [id]
     )
     const hash = rows[0].password;
+    //if (!hash) return res.status(401).json({ message:  'no user'});
     const match = await bcrypt.compare(password, hash);
     if (!match) {
-      return res.status(401).json({ message: `incorret password` })
+      return res.status(401).json({ message: `incorret password` });
     }
-    res.status(200).json({ message: 'correct password' })
+    req.session.regenerate(err => {
+      if (err) return res.status(500).json({ message: err.message });
+      req.session.userId = id;
+      res.send('logged in');
+    })
   } catch (error) {
     next(error)
   }
+})
+
+router.post('/logout', (req, res, next) => {
+  req.session.destroy(err => {
+    if (err) return next(err);
+    res.clearCookie('connect.sid');
+    res.json({ message: 'logged out' })
+  })
 })
 
 
