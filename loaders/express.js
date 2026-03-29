@@ -1,6 +1,7 @@
 const express = require('express');
 
-const userRouter = require('../routes/userRoute');
+const userRouter = require('../routes/userRoutes');
+const authRouter = require('../routes/authRoutes');
 const { errorHandler } = require('../middleware/middleware');
 const pool = require('../db');
 
@@ -27,6 +28,7 @@ module.exports = (app) => {
 
   // Routes Middleware
   app.use('/user', userRouter);
+  app.use('/auth', authRouter);
 
   // Error handler middleware
   app.use(errorHandler);
