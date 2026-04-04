@@ -1,7 +1,10 @@
 const { compare } = require('bcrypt');
 const { promisify } = require('util');
+const AppError = require('../utils/AppError');
 
 const { getHashedPassword, updateUserData, deleteUser } = require('../models/authModels');
+const { userById } = require("../models/userModels");
+const sessionConfig = require('../config/session')
 
 
 const login = async (req, res, next) => {
@@ -13,12 +16,14 @@ const login = async (req, res, next) => {
     const hashedPassword = await getHashedPassword(id);
     const match = await compare(password, hashedPassword);
 
-    if (!match) {return res.status(401).json({ message: "wrong credentials" })};
+    if (!match) return next(new AppError(400, 'fail', 'wrong credentials'));
+
+    const user = await userById(id)
 
     const regenerate = promisify(req.session.regenerate.bind(req.session));
     await regenerate();
+    req.session.user = { id: user.rows[0].id, role: user.rows[0].role };
 
-    req.session.userId = id;
     res.status(200).json({ message: "logged in" });
 
   } catch (error) {
@@ -58,13 +63,17 @@ const patchUserData = async (req, res, next) => {
 const removeUser = async (req, res, next) => {
   try {
 
-    const { id } = req.params
-    await deleteUser(id)
+    const { id } = req.params;
+    await deleteUser(id);
+    
+    const destroy = promisify(req.session.destroy.bind(req.session));
+    await destroy();
 
-    res.status(200).json({ message: "user deleted successfully" })
+    res.clearCookie('connect.sid');
+    res.status(200).json({ message: "user deleted successfully" });
 
   } catch (error) {
-
+    next(error);
   }
 };
 

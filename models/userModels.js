@@ -27,7 +27,7 @@ const createUser = async function(userName, dateOfBirth, emailAddress, phoneNumb
       [userName, dateOfBirth, emailAddress, phoneNumber, hashedPassword]
     );
   } catch (error) {
-    throw error
+    throw error;
   }
 };
 

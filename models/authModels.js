@@ -8,9 +8,9 @@ const getHashedPassword = async function (id) {
     return rows[0].password;
 
   } catch (error) {
-    throw error
+    throw error;
   }
-}
+};
 
 const updateUserData = async function (userName, dateOfBirth, emailAddress, phoneNumber, id) {
   try {
@@ -24,15 +24,15 @@ const updateUserData = async function (userName, dateOfBirth, emailAddress, phon
       [userName, dateOfBirth, emailAddress, phoneNumber, id]);
 
   } catch (error) {
-    throw error
+    throw error;
   };
 };
 
 const deleteUser = async function (id) {
   try {
-    await pool.query(`DELETE FROM users WHERE id = $1`, [id])
+    await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
   } catch (error) {
-    throw error
+    throw error;
   }
 };
 
