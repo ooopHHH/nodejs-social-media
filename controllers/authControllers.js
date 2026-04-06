@@ -4,7 +4,6 @@ const AppError = require('../utils/AppError');
 
 const { getHashedPassword, updateUserData, deleteUser } = require('../models/authModels');
 const { userById } = require("../models/userModels");
-const sessionConfig = require('../config/session')
 
 
 const login = async (req, res, next) => {
@@ -18,7 +17,7 @@ const login = async (req, res, next) => {
 
     if (!match) return next(new AppError(400, 'fail', 'wrong credentials'));
 
-    const user = await userById(id)
+    const user = await userById(id);
 
     const regenerate = promisify(req.session.regenerate.bind(req.session));
     await regenerate();
@@ -74,7 +73,7 @@ const removeUser = async (req, res, next) => {
 
   } catch (error) {
     next(error);
-  }
+  };
 };
 
 

@@ -7,7 +7,7 @@ const allUsers = async () => {
     return list;
   } catch (error) {
     throw error;
-  }
+  };
 };
 
 const userById = async function(id) {
@@ -16,7 +16,7 @@ const userById = async function(id) {
     return result;
   } catch (error) {
     throw error;
-  }
+  };
 };
 
 const createUser = async function(userName, dateOfBirth, emailAddress, phoneNumber, hashedPassword) {
@@ -28,7 +28,7 @@ const createUser = async function(userName, dateOfBirth, emailAddress, phoneNumb
     );
   } catch (error) {
     throw error;
-  }
+  };
 };
 
 

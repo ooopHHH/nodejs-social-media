@@ -2,15 +2,16 @@ const express = require('express');
 
 const { login, logout, patchUserData, removeUser } = require('../controllers/authControllers');
 const router = express.Router();
-const requireRole = require('../middleware/authorization')
-
+const requireAuthorization = require('../middleware/requireAuthorization');
+const requireAuthentication = require('../middleware/requireAuthentication');
+const requireAuthorizationOrOwner = require('../middleware/requireAuthorizationOrOwner');
 
 router.post('/login/:id', login);
-router.post('/logout', logout);
+router.post('/logout', requireAuthentication, logout);
 
-router.patch('/:id', patchUserData);
+router.patch('/:id', requireAuthentication, requireAuthorizationOrOwner, patchUserData);
 
-router.delete('/:id', requireRole('admin'), removeUser);
+router.delete('/:id', requireAuthentication, requireAuthorizationOrOwner, removeUser);
 
 
 module.exports = router;
